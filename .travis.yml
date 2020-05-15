@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t oksamha/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true oksamha/react-test npm test
+
+after_success:
+  - docker build -t oksamha/multi-client ./client
+  - docker build -t oksamha/multi-nginx ./nginx
+  - docker build -t oksamha/multi-server ./server
+  - docker build -t oksamha/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # 이미지들을 docker hub로 푸시
+  - docker push oksamha/multi-client
+  - docker push oksamha/multi-nginx
+  - docker push oksamha/multi-server
+  - docker push oksamha/multi-worker
